@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using OpenBrewery.Core.DTOs;
 using OpenBrewery.Core.Enums;
 using OpenBrewery.Core.Interfaces;
@@ -12,38 +13,65 @@ namespace OpenBrewery.Infrastructure.Services
     {
         private readonly IOpenBreweryClient _client;
         private readonly ILogger<OpenBreweryService> _logger;
+        private readonly IMemoryCache _cache;
 
-        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger)
+        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache)
         {
             _client = client;
             _logger = logger;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<BreweryDto>> GetBreweryAsync(GetBreweriesRequest request)
         {
+            const string cacheKey = "Breweries";
+            IList<BreweryDto> cachedBreweries;
             Validate(request);
 
-            var apiResponse = await _client.GetBreweriesAsync();
-
-            var breweries = apiResponse.Select(x => new BreweryDto
+            if (_cache.TryGetValue(cacheKey, out IList<BreweryDto>? breweriesFromCache))
             {
-                Name = x.Name,
-                City = x.City,
-                Phone = x.Phone,
-                BrowserType = x.BreweryType,
-                Latitude = x.Latitude,
-                Longitude = x.Longitude,
-                DistamceInKm = null
-            }).ToList();
+                _logger.LogInformation("Returning breweries from cache");
 
-            if(!string.IsNullOrEmpty(request.Search))
+                cachedBreweries = breweriesFromCache;
+            }
+            else
+            {
+                var apiResponse = await _client.GetBreweriesAsync();
+
+                cachedBreweries = apiResponse.Select(x => new BreweryDto
+                {
+                    Name = x.Name,
+                    City = x.City,
+                    Phone = x.Phone,
+                    BrowserType = x.BreweryType,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude,
+                    DistanceInKm = null
+                }).ToList();
+
+                _cache.Set(cacheKey, cachedBreweries, TimeSpan.FromMinutes(10));
+            }
+
+            var breweries = cachedBreweries
+                .Select(x => new BreweryDto
+                {
+                    Name = x.Name,
+                    City = x.City,
+                    Phone = x.Phone,
+                    BrowserType = x.BrowserType,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude
+                })
+                .ToList();
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 breweries = breweries.Where(b =>
                     (!string.IsNullOrWhiteSpace(b.Name) && b.Name.Contains(request.Search, StringComparison.OrdinalIgnoreCase) ||
-                    !string.IsNullOrWhiteSpace(b.City) && b.Name.Contains(request.Search, StringComparison.OrdinalIgnoreCase))
+                    !string.IsNullOrWhiteSpace(b.City) && b.City.Contains(request.Search, StringComparison.OrdinalIgnoreCase))
                     ).ToList();
 
-                _logger.LogInformation("Search '{Search}' filtered breweries to {FilteredCount}.", request.Search, breweries.Count());
+                _logger.LogInformation("Search '{Search}' filtered breweries to {FilteredCount}.", request.Search, breweries.Count);
             }
 
             BrewerySortBy? sortBy = null;
@@ -72,19 +100,19 @@ namespace OpenBrewery.Infrastructure.Services
                         {
                             var distance = GeoDistanceCalculator.GeoDistanceCalculate(request.UserLatitude.Value, request.UserLongitude.Value, 
                                                                             brewery.Latitude.Value, brewery.Longitude.Value);
-                            brewery.DistamceInKm = distance;
+                            brewery.DistanceInKm = distance;
                         }
 
-                        breweries = breweries.Where(x=> x.DistamceInKm.HasValue).ToList();
+                        breweries = breweries.Where(x=> x.DistanceInKm.HasValue).ToList();
 
                         breweries = request.Descending
-                            ? breweries.OrderByDescending(x => x.City).ToList()
-                            : breweries.OrderBy(x => x.City).ToList();
+                            ? breweries.OrderByDescending(x => x.DistanceInKm).ToList()
+                            : breweries.OrderBy(x => x.DistanceInKm).ToList();
                         break;
                 }
 
                 _logger.LogInformation("Sorted breweries by '{SortBy}' in order '{Order}'.", request.SortBy, request.Descending ? "Descending" : "Ascending");
-            }
+            }          
 
             return breweries;
         }

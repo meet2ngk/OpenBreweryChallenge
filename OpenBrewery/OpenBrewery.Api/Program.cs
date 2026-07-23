@@ -16,6 +16,7 @@ builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSecti
 builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
 
 builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
+builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
