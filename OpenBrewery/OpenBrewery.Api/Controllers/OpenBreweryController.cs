@@ -24,9 +24,10 @@ namespace OpenBrewery.Api.Controllers
         {
             try
             {
+
                 _logger.LogInformation("Fetching breweries");
 
-                var breweries = await _openBreweryService.GetBrewery(getBreweriesRequest);
+                var breweries = await _openBreweryService.GetBreweryAsync(getBreweriesRequest);
 
                 if(!breweries.Any())
                 {
@@ -38,6 +39,12 @@ namespace OpenBrewery.Api.Controllers
 
                 return Ok(breweries);
 
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, ex.Message);
+
+                return BadRequest(ex.Message);
             }
             catch (Exception ex) 
             {

@@ -5,6 +5,6 @@ namespace OpenBrewery.Core.Interfaces
 {
     public interface IOpenBreweryService
     {
-        public Task<IEnumerable<BreweryDto>> GetBrewery(GetBreweriesRequest getBreweriesRequest);
+        public Task<IEnumerable<BreweryDto>> GetBreweryAsync(GetBreweriesRequest getBreweriesRequest);
     }
 }
