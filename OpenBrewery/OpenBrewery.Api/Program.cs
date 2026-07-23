@@ -1,3 +1,8 @@
+using OpenBrewery.Core.Configuration;
+using OpenBrewery.Core.Interfaces;
+using OpenBrewery.Infrastructure.External.Clients;
+using OpenBrewery.Infrastructure.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,6 +12,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSection("OpenBreweryApi"));
+builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
+
+builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
