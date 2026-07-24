@@ -57,7 +57,7 @@ namespace OpenBrewery.Infrastructure.Services
                     Name = x.Name,
                     City = x.City,
                     Phone = x.Phone,
-                    BrowserType = x.BrowserType,
+                    BreweryType = x.BreweryType,
                     Latitude = x.Latitude,
                     Longitude = x.Longitude
                 })
@@ -131,7 +131,7 @@ namespace OpenBrewery.Infrastructure.Services
 
             if (request.UserLatitude.HasValue != request.UserLongitude.HasValue)
             {
-                throw new ArgumentException("Both UserLatitude and UserLongiture must be provided.");
+                throw new ArgumentException("Both UserLatitude and UserLongitude must be provided.");
             }
 
             if(sortBy == BrewerySortBy.Distance && !request.UserLatitude.HasValue)
@@ -162,7 +162,7 @@ namespace OpenBrewery.Infrastructure.Services
                 Name = x.Name,
                 City = x.City,
                 Phone = x.Phone,
-                BrowserType = x.BreweryType,
+                BreweryType = x.BreweryType,
                 Latitude = x.Latitude,
                 Longitude = x.Longitude,
                 DistanceInKm = null
@@ -183,7 +183,7 @@ namespace OpenBrewery.Infrastructure.Services
                         Name = x.Name,
                         City = x.City,
                         Phone = x.Phone,
-                        BrowserType = x.BreweryType,
+                        BreweryType = x.BreweryType,
                         Latitude = x.Latitude,
                         Longitude = x.Longitude,
                         DistanceInKm = null
@@ -216,7 +216,7 @@ namespace OpenBrewery.Infrastructure.Services
                     Name = x.Name,
                     City = x.City,
                     Phone = x.Phone,
-                    BrowserType = x.BreweryType,
+                    BreweryType = x.BreweryType,
                     Latitude = x.Latitude,
                     Longitude = x.Longitude,
                     DistanceInKm = null

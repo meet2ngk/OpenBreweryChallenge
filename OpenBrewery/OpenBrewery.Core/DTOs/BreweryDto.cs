@@ -7,7 +7,7 @@ namespace OpenBrewery.Core.DTOs
         public string Name { get; set; }
         public string City { get; set; }
         public string Phone { get; set; }
-        public string BrowserType { get; set; }
+        public string BreweryType { get; set; }
         public double? DistanceInKm { get; set; }
         [JsonIgnore]
         public double? Latitude { get; set; }

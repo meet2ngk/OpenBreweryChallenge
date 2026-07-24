@@ -79,12 +79,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 var connectionString =
     builder.Configuration.GetConnectionString("BreweryDatabase");
-var logger = app.Services
-    .GetRequiredService<ILogger<Program>>();
 
-logger.LogInformation(
-    "SQLite Connection String: {ConnectionString}",
-    connectionString);
 // HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
