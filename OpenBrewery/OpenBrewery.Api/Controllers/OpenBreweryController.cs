@@ -1,12 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using OpenBrewery.Core.DTOs;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Core.Models;
+using OpenBrewery.Infrastructure.External.Models;
 
 namespace OpenBrewery.Api.Controllers
 {
     [ApiController]
-    [Route("api/v1/breweries")]
+    [Route("api/v{version:apiVersion}/breweries")]
+    [ApiVersion(1.0)]
+    [ApiVersion(2.0)]
     public class OpenBreweryController : ControllerBase
     {
 
@@ -20,7 +24,15 @@ namespace OpenBrewery.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BreweryDto>>> Get([FromQuery]GetBreweriesRequest getBreweriesRequest)
+        [MapToApiVersion(1.0)]
+        public async Task<ActionResult<IEnumerable<BreweryDto>>> GetV1([FromQuery] GetBreweriesRequest getBreweriesRequest)
+        {
+            return Ok(Enumerable.Empty<BreweryDto>());
+        }
+
+        [HttpGet]
+        [MapToApiVersion(2.0)]
+        public async Task<ActionResult<IEnumerable<BreweryDto>>> GetV2([FromQuery]GetBreweriesRequest getBreweriesRequest)
         {
             try
             {

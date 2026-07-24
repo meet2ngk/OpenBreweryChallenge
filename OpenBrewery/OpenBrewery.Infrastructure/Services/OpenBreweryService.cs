@@ -26,6 +26,7 @@ namespace OpenBrewery.Infrastructure.Services
         {
             const string cacheKey = "Breweries";
             IList<BreweryDto> cachedBreweries;
+
             Validate(request);
 
             if (_cache.TryGetValue(cacheKey, out IList<BreweryDto>? breweriesFromCache))
