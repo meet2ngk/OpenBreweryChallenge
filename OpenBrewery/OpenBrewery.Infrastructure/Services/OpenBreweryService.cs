@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using OpenBrewery.Core.Configuration;
 using OpenBrewery.Core.DTOs;
 using OpenBrewery.Core.Enums;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Core.Models;
 using OpenBrewery.Core.Utilities;
-
 
 namespace OpenBrewery.Infrastructure.Services
 {
@@ -14,12 +15,17 @@ namespace OpenBrewery.Infrastructure.Services
         private readonly IOpenBreweryClient _client;
         private readonly ILogger<OpenBreweryService> _logger;
         private readonly IMemoryCache _cache;
+        private readonly IBreweryRepository _repository;
+        private readonly IOptions<WebApiDataSourceOptions> _options;
 
-        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache)
+        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache, 
+                                    IBreweryRepository repository, IOptions<WebApiDataSourceOptions> options)
         {
             _client = client;
             _logger = logger;
             _cache = cache;
+            _repository = repository;
+            _options = options;
         }
 
         public async Task<IEnumerable<BreweryDto>> GetBreweryAsync(GetBreweriesRequest request)
@@ -37,20 +43,12 @@ namespace OpenBrewery.Infrastructure.Services
             }
             else
             {
-                var apiResponse = await _client.GetBreweriesAsync();
+                cachedBreweries = await GetBreweriesFromSourceAsync();
 
-                cachedBreweries = apiResponse.Select(x => new BreweryDto
-                {
-                    Name = x.Name,
-                    City = x.City,
-                    Phone = x.Phone,
-                    BrowserType = x.BreweryType,
-                    Latitude = x.Latitude,
-                    Longitude = x.Longitude,
-                    DistanceInKm = null
-                }).ToList();
-
-                _cache.Set(cacheKey, cachedBreweries, TimeSpan.FromMinutes(10));
+                _cache.Set(
+                    cacheKey,
+                    cachedBreweries,
+                    TimeSpan.FromMinutes(10));
             }
 
             var breweries = cachedBreweries
@@ -140,6 +138,90 @@ namespace OpenBrewery.Infrastructure.Services
             {
                 throw new ArgumentException("User coordinates are required when sorting by distance.");
             }
+        }
+        private async Task<IList<BreweryDto>> GetBreweriesFromSourceAsync()
+        {
+            _logger.LogInformation("Configured brewery data source: {DataSource}", _options.Value.DataSource);
+
+            if (_options.Value.DataSource == BreweryDataSource.Database)
+            {
+                return await GetBreweriesFromDatabaseAsync();
+            }
+
+            return await GetBreweriesFromExternalApiAsync();
+        }
+
+        private async Task<IList<BreweryDto>> GetBreweriesFromExternalApiAsync()
+        {
+            _logger.LogInformation("Fetching breweries from external API.");
+
+            var apiResponse = await _client.GetBreweriesAsync();
+
+            return apiResponse.Select(x => new BreweryDto
+            {
+                Name = x.Name,
+                City = x.City,
+                Phone = x.Phone,
+                BrowserType = x.BreweryType,
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
+                DistanceInKm = null
+            }).ToList();
+        }
+
+        private async Task<IList<BreweryDto>> GetBreweriesFromDatabaseAsync()
+        {
+            var breweriesFromDatabase = await _repository.GetAllAsync();
+
+            if (breweriesFromDatabase.Any())
+            {
+                _logger.LogInformation("Returning {Count} breweries from SQLite.", breweriesFromDatabase.Count);
+
+                return breweriesFromDatabase
+                    .Select(x => new BreweryDto
+                    {
+                        Name = x.Name,
+                        City = x.City,
+                        Phone = x.Phone,
+                        BrowserType = x.BreweryType,
+                        Latitude = x.Latitude,
+                        Longitude = x.Longitude,
+                        DistanceInKm = null
+                    })
+                    .ToList();
+            }
+
+            _logger.LogInformation("SQLite database is empty. Fetching breweries from external API for initial population.");
+
+            var breweriesFromApi = await _client.GetBreweriesAsync();
+
+            var breweryEntities = breweriesFromApi
+                .Select(x => new Core.Entities.Brewery
+                {
+                    Name = x.Name,
+                    City = x.City,
+                    Phone = x.Phone,
+                    BreweryType = x.BreweryType,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude
+                })
+                .ToList();
+
+            await _repository.SeedAsync(breweryEntities);
+            _logger.LogInformation("Seeded {Count} breweries into SQLite.", breweryEntities.Count);
+
+            return breweriesFromApi
+                .Select(x => new BreweryDto
+                {
+                    Name = x.Name,
+                    City = x.City,
+                    Phone = x.Phone,
+                    BrowserType = x.BreweryType,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude,
+                    DistanceInKm = null
+                })
+                .ToList();
         }
     }
 }

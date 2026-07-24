@@ -30,13 +30,24 @@ builder.Services.AddApiVersioning(options =>
 
 //Configuration (options)
 builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSection("OpenBreweryApi"));
-var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+builder.Services.Configure<WebApiDataSourceOptions>(builder.Configuration.GetSection("WebApiDataSource"));
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? throw new InvalidOperationException("JWT configuration is missing.");
 
-
-//DBContext / repository
+//DBContext
 builder.Services.AddDbContext<BreweryDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("BreweryDatabase")));
+
+//Repository
 builder.Services.AddScoped<IBreweryRepository, BreweryRepository>();
+
+//HTTP clients/ external API
+builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
+
+//Application Services
+builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
+
+//Cache
+builder.Services.AddMemoryCache();
 
 //Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -65,18 +76,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//HTTP client/ external API
-builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
-
-//Services
-builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
-
-
-//Cache
-builder.Services.AddMemoryCache();
-
 var app = builder.Build();
+var connectionString =
+    builder.Configuration.GetConnectionString("BreweryDatabase");
+var logger = app.Services
+    .GetRequiredService<ILogger<Program>>();
 
+logger.LogInformation(
+    "SQLite Connection String: {ConnectionString}",
+    connectionString);
 // HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
