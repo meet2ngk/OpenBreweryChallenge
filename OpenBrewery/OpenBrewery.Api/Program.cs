@@ -24,19 +24,7 @@ builder.Services.AddApiVersioning(options =>
 
 //Swagger/ OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Open Brewery API",
-        Version = "v1"
-    });
-    options.SwaggerDoc("v2", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Open Brewery API",
-        Version = "v2"
-    });
-});
+builder.Services.AddSwaggerGen();
 
 //Configuration (options)
 builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSection("OpenBreweryApi"));
@@ -56,11 +44,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Open Brewery API v1");
-        options.SwaggerEndpoint("/swagger/v2/swagger.json", "Open Brewery API v2");
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
