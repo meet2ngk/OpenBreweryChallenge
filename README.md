@@ -1,10 +1,10 @@
 # OpenBreweryChallenge
-OpenBrewery Challenge repository - e.l.f. technical assingnment
 
+OpenBrewery Challenge repository - e.l.f. technical assignment.
 
 # Open Brewery API
 
-A .NET 8 ASP.NET Core Web API that integrates with the Open Brewery API to retrieve and manage brewery information.
+A .NET 8 Web API for retrieving, searching, filtering, and sorting brewery information using the Open Brewery API.
 
 ## Features
 

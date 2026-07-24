@@ -23,7 +23,7 @@ namespace OpenBrewery.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("token")]
-        public IActionResult GenerateToke()
+        public IActionResult GenerateToken()
         {
 
             var key = new SymmetricSecurityKey(
