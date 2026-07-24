@@ -1,9 +1,12 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenBrewery.Core.Configuration;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Infrastructure.External.Clients;
+using OpenBrewery.Infrastructure.Persistence.Context;
+using OpenBrewery.Infrastructure.Persistence.Repositories;
 using OpenBrewery.Infrastructure.Services;
 using System.Text;
 
@@ -28,6 +31,12 @@ builder.Services.AddApiVersioning(options =>
 //Configuration (options)
 builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSection("OpenBreweryApi"));
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+
+
+//DBContext / repository
+builder.Services.AddDbContext<BreweryDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("BreweryDatabase")));
+builder.Services.AddScoped<IBreweryRepository, BreweryRepository>();
 
 //Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -61,6 +70,7 @@ builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
 
 //Services
 builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
+
 
 //Cache
 builder.Services.AddMemoryCache();
