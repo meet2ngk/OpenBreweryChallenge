@@ -1,13 +1,14 @@
 ﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenBrewery.Core.DTOs;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Core.Models;
-using OpenBrewery.Infrastructure.External.Models;
 
 namespace OpenBrewery.Api.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Reader")]
     [Route("api/v{version:apiVersion}/breweries")]
     [ApiVersion(1.0)]
     public class OpenBreweryController : ControllerBase
