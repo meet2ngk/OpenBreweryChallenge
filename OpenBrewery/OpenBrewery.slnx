@@ -2,4 +2,5 @@
   <Project Path="OpenBrewery.Api/OpenBrewery.Api.csproj" />
   <Project Path="OpenBrewery.Core/OpenBrewery.Core.csproj" />
   <Project Path="OpenBrewery.Infrastructure/OpenBrewery.Infrastructure.csproj" />
+  <Project Path="OpenBrewery.Tests/OpenBrewery.Tests.csproj" Id="d4986ae7-09d2-41d6-8812-de30c7562a45" />
 </Solution>
