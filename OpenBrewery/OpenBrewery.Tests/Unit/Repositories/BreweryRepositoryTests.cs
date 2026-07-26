@@ -4,7 +4,7 @@ using OpenBrewery.Core.Entities;
 using OpenBrewery.Infrastructure.Persistence.Context;
 using OpenBrewery.Infrastructure.Persistence.Repositories;
 
-namespace OpenBrewery.Tests.Repositories
+namespace OpenBrewery.Tests.Unit.Repositories
 {
     public class BreweryRepositoryTests
     {

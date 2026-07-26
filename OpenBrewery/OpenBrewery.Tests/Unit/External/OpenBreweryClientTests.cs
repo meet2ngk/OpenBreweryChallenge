@@ -7,7 +7,7 @@ using OpenBrewery.Infrastructure.External.Models;
 using System.Net;
 using System.Net.Http.Json;
 
-namespace OpenBrewery.Tests.External
+namespace OpenBrewery.Tests.Unit.External
 {
     public class OpenBreweryClientTests
     {

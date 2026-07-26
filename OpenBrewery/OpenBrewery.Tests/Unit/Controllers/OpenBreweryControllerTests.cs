@@ -7,7 +7,7 @@ using OpenBrewery.Core.DTOs;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Core.Models;
 
-namespace OpenBrewery.Tests.Controllers
+namespace OpenBrewery.Tests.Unit.Controllers
 {
     public class OpenBreweryControllerTests
     {

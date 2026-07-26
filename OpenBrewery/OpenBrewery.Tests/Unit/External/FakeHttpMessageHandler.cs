@@ -1,4 +1,4 @@
-﻿namespace OpenBrewery.Tests.External
+﻿namespace OpenBrewery.Tests.Unit.External
 {
     public class FakeHttpMessageHandler : HttpMessageHandler
     {

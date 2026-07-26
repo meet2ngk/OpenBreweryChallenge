@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenBrewery.Api.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace OpenBrewery.Tests.Controllers
+namespace OpenBrewery.Tests.Unit.Controllers
 {
     public class AuthControllerTests
     {

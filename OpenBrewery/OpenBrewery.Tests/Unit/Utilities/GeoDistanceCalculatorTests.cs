@@ -1,6 +1,6 @@
 ﻿using OpenBrewery.Core.Utilities;
 
-namespace OpenBrewery.Tests.Utilities
+namespace OpenBrewery.Tests.Unit.Utilities
 {
     public class GeoDistanceCalculatorTests
     {

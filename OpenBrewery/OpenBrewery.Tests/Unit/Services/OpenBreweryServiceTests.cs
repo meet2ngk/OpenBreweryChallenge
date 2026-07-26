@@ -9,7 +9,7 @@ using OpenBrewery.Core.Models;
 using OpenBrewery.Infrastructure.External.Models;
 using OpenBrewery.Infrastructure.Services;
 
-namespace OpenBrewery.Tests.Services
+namespace OpenBrewery.Tests.Unit.Services
 {
     public class OpenBreweryServiceTests
     {
