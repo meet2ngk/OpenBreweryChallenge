@@ -30,6 +30,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.ExternalApi
                 });
 
+            var cacheOptions = Options.Create(
+                  new CacheOptions
+                  {
+                      ExpirationInMinutes = 10
+                  });
+
             clientMock
                 .Setup(x => x.GetBreweriesAsync())
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
@@ -59,7 +65,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -90,6 +97,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.ExternalApi
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             clientMock
                 .Setup(x => x.GetBreweriesAsync())
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
@@ -111,7 +124,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -141,6 +155,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.ExternalApi
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             clientMock
                 .Setup(x => x.GetBreweriesAsync())
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
@@ -154,7 +174,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -185,6 +206,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.ExternalApi
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             clientMock
                 .Setup(x => x.GetBreweriesAsync())
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
@@ -198,7 +225,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -229,12 +257,19 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.ExternalApi
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             var service = new OpenBreweryService(
                 clientMock.Object,
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -267,6 +302,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.Database
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             repositoryMock
                 .Setup(x => x.GetAllAsync())
                 .ReturnsAsync(new List<Core.Entities.Brewery>
@@ -284,7 +325,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options,
+                cacheOptions);
 
             var request = new GetBreweriesRequest();
 
@@ -315,6 +357,12 @@ namespace OpenBrewery.Tests.Unit.Services
                     DataSource = BreweryDataSource.Database
                 });
 
+            var cacheOptions = Options.Create(
+                 new CacheOptions
+                 {
+                     ExpirationInMinutes = 10
+                 });
+
             repositoryMock
                 .Setup(x => x.GetAllAsync())
                 .ReturnsAsync(new List<Core.Entities.Brewery>());
@@ -336,7 +384,8 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options);
+                options, 
+                cacheOptions);
 
             var request = new GetBreweriesRequest();
 

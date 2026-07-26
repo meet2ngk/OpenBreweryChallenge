@@ -17,15 +17,17 @@ namespace OpenBrewery.Infrastructure.Services
         private readonly IMemoryCache _cache;
         private readonly IBreweryRepository _repository;
         private readonly IOptions<WebApiDataSourceOptions> _options;
+        private readonly CacheOptions _cacheOptions;
 
         public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache, 
-                                    IBreweryRepository repository, IOptions<WebApiDataSourceOptions> options)
+                                    IBreweryRepository repository, IOptions<WebApiDataSourceOptions> options, IOptions<CacheOptions> cacheOptions)
         {
             _client = client;
             _logger = logger;
             _cache = cache;
             _repository = repository;
             _options = options;
+            _cacheOptions = cacheOptions.Value;
         }
 
         public async Task<IEnumerable<BreweryDto>> GetBreweryAsync(GetBreweriesRequest request)
@@ -48,7 +50,7 @@ namespace OpenBrewery.Infrastructure.Services
                 _cache.Set(
                     cacheKey,
                     cachedBreweries,
-                    TimeSpan.FromMinutes(10));
+                    TimeSpan.FromMinutes(_cacheOptions.ExpirationInMinutes));
             }
 
             var breweries = cachedBreweries

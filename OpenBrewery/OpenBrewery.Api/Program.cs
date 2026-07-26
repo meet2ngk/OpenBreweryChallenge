@@ -31,6 +31,7 @@ builder.Services.AddApiVersioning(options =>
 //Configuration (options)
 builder.Services.Configure<OpenBreweryApiOptions>(builder.Configuration.GetSection("OpenBreweryApi"));
 builder.Services.Configure<WebApiDataSourceOptions>(builder.Configuration.GetSection("WebApiDataSource"));
+builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection("Cache"));
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? throw new InvalidOperationException("JWT configuration is missing.");
 
 //DBContext

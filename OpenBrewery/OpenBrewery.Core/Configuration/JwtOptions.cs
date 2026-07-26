@@ -14,6 +14,6 @@ namespace OpenBrewery.Core.Configuration
 
         public string Audience { get; set; } = string.Empty;
 
-        public double ExpirationInMinutes { get; set; } = 30;
+        public double Expirations { get; set; } = 30;
     }
 }
