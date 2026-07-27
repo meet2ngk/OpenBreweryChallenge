@@ -5,7 +5,6 @@ using OpenBrewery.Core.Configuration;
 using OpenBrewery.Infrastructure.External.Clients;
 using OpenBrewery.Tests.Unit.External;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 

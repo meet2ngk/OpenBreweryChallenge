@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using OpenBrewery.Api.Controllers;
 using System.IdentityModel.Tokens.Jwt;
 

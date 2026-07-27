@@ -3,11 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using OpenBrewery.Core.Entities;
 using OpenBrewery.Infrastructure.Persistence.Context;
 using OpenBrewery.Infrastructure.Persistence.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenBrewery.Tests.Integration.Repositories
 {
@@ -31,7 +26,7 @@ namespace OpenBrewery.Tests.Integration.Repositories
             var repository = new BreweryRepository(context);
 
             var breweries = new List<Brewery>
-            { 
+            {
                 new Brewery
                 {
                     Name = "Brewery One",
@@ -49,7 +44,7 @@ namespace OpenBrewery.Tests.Integration.Repositories
             await repository.SeedAsync(breweries);
             //act
             var result = await context.Breweries.ToListAsync();
-            
+
             //assert
             Assert.Equal(2, result.Count);
             Assert.Contains(result, x => x.Name == "Brewery One");

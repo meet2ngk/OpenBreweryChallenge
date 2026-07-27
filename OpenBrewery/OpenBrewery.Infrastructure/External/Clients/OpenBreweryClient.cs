@@ -30,13 +30,13 @@ namespace OpenBrewery.Infrastructure.External.Clients
 
                 var response = await _httpClient.GetAsync(_options.Value.BreweriesEndpoint);
 
-                _logger.LogInformation("Open Brewery external API responsed with status code {StatusCode}",response.StatusCode);
+                _logger.LogInformation("Open Brewery external API responded with status code {StatusCode}", response.StatusCode);
 
                 response.EnsureSuccessStatusCode();
 
                 var breweries = await response.Content.ReadFromJsonAsync<List<OpenBreweryApiResponse>>() ?? new List<OpenBreweryApiResponse>();
 
-                _logger.LogInformation("Retreived {Count} breweries from Open Brewery external API", breweries.Count);
+                _logger.LogInformation("Retrieved {Count} breweries from Open Brewery external API", breweries.Count);
 
                 return breweries ?? Enumerable.Empty<OpenBreweryApiResponse>();
 

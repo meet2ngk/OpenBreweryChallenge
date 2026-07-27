@@ -384,7 +384,7 @@ namespace OpenBrewery.Tests.Unit.Services
                 loggerMock.Object,
                 cache,
                 repositoryMock.Object,
-                options, 
+                options,
                 cacheOptions);
 
             var request = new GetBreweriesRequest();

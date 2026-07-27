@@ -30,7 +30,7 @@ namespace OpenBrewery.Api.Controllers
                     Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)
                 );
 
-            var credentials = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
                 {
@@ -39,9 +39,9 @@ namespace OpenBrewery.Api.Controllers
                     new(ClaimTypes.Role, "Reader")
                 };
 
-            JwtSecurityToken jwtSecurityToken = new JwtSecurityToken( 
+            JwtSecurityToken jwtSecurityToken = new JwtSecurityToken(
                     issuer: _jwtOptions.Issuer,
-                    audience:  _jwtOptions.Audience,
+                    audience: _jwtOptions.Audience,
                     claims: claims,
                     expires: DateTime.UtcNow.AddMinutes(_jwtOptions.Expirations),
                     signingCredentials: credentials

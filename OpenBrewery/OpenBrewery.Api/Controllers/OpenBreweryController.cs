@@ -24,7 +24,7 @@ namespace OpenBrewery.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BreweryDto>>> Get([FromQuery]GetBreweriesRequest getBreweriesRequest)
+        public async Task<ActionResult<IEnumerable<BreweryDto>>> Get([FromQuery] GetBreweriesRequest getBreweriesRequest)
         {
             try
             {
@@ -33,7 +33,7 @@ namespace OpenBrewery.Api.Controllers
 
                 var breweries = await _openBreweryService.GetBreweryAsync(getBreweriesRequest);
 
-                if(!breweries.Any())
+                if (!breweries.Any())
                 {
                     _logger.LogInformation("No breweries found for '{Search}'", getBreweriesRequest?.Search);
                     return NotFound("No breweries found.");
@@ -50,7 +50,7 @@ namespace OpenBrewery.Api.Controllers
 
                 return BadRequest(ex.Message);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occured while retreiving breweries.");
 

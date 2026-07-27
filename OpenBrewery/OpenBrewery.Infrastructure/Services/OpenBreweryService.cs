@@ -19,7 +19,7 @@ namespace OpenBrewery.Infrastructure.Services
         private readonly IOptions<WebApiDataSourceOptions> _options;
         private readonly CacheOptions _cacheOptions;
 
-        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache, 
+        public OpenBreweryService(IOpenBreweryClient client, ILogger<OpenBreweryService> logger, IMemoryCache cache,
                                     IBreweryRepository repository, IOptions<WebApiDataSourceOptions> options, IOptions<CacheOptions> cacheOptions)
         {
             _client = client;
@@ -81,9 +81,9 @@ namespace OpenBrewery.Infrastructure.Services
                 sortBy = parsedSortBy;
             }
 
-            if(sortBy.HasValue) 
+            if (sortBy.HasValue)
             {
-                switch(sortBy.Value)
+                switch (sortBy.Value)
                 {
                     case BrewerySortBy.Name:
                         breweries = request.Descending
@@ -97,14 +97,14 @@ namespace OpenBrewery.Infrastructure.Services
                         break;
                     case BrewerySortBy.Distance:
 
-                        foreach(var brewery in breweries.Where(x => x.Latitude.HasValue && x.Longitude.HasValue))
+                        foreach (var brewery in breweries.Where(x => x.Latitude.HasValue && x.Longitude.HasValue))
                         {
-                            var distance = GeoDistanceCalculator.GeoDistanceCalculate(request.UserLatitude.Value, request.UserLongitude.Value, 
+                            var distance = GeoDistanceCalculator.GeoDistanceCalculate(request.UserLatitude.Value, request.UserLongitude.Value,
                                                                             brewery.Latitude.Value, brewery.Longitude.Value);
                             brewery.DistanceInKm = distance;
                         }
 
-                        breweries = breweries.Where(x=> x.DistanceInKm.HasValue).ToList();
+                        breweries = breweries.Where(x => x.DistanceInKm.HasValue).ToList();
 
                         breweries = request.Descending
                             ? breweries.OrderByDescending(x => x.DistanceInKm).ToList()
@@ -113,11 +113,11 @@ namespace OpenBrewery.Infrastructure.Services
                 }
 
                 _logger.LogInformation("Sorted breweries by '{SortBy}' in order '{Order}'.", request.SortBy, request.Descending ? "Descending" : "Ascending");
-            }          
+            }
 
             return breweries;
         }
-    
+
         private static void Validate(GetBreweriesRequest request)
         {
             BrewerySortBy? sortBy = null;
@@ -136,7 +136,7 @@ namespace OpenBrewery.Infrastructure.Services
                 throw new ArgumentException("Both UserLatitude and UserLongitude must be provided.");
             }
 
-            if(sortBy == BrewerySortBy.Distance && !request.UserLatitude.HasValue)
+            if (sortBy == BrewerySortBy.Distance && !request.UserLatitude.HasValue)
             {
                 throw new ArgumentException("User coordinates are required when sorting by distance.");
             }
