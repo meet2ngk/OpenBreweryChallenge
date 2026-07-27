@@ -13,10 +13,12 @@ namespace OpenBrewery.Tests.Unit.Services
 {
     public class OpenBreweryServiceTests
     {
-        [Fact]
-        public async Task GetBreweryAsync_SearchByName_ReturnsMatchingBrewery()
+        private static (
+            Mock<IOpenBreweryClient> clientMock,
+            Mock<IBreweryRepository> repositoryMock,
+            OpenBreweryService service)
+            CreateService(BreweryDataSource dataSource)
         {
-            // Arrange
             var clientMock = new Mock<IOpenBreweryClient>();
             var repositoryMock = new Mock<IBreweryRepository>();
             var loggerMock = new Mock<ILogger<OpenBreweryService>>();
@@ -27,37 +29,13 @@ namespace OpenBrewery.Tests.Unit.Services
             var options = Options.Create(
                 new WebApiDataSourceOptions
                 {
-                    DataSource = BreweryDataSource.ExternalApi
+                    DataSource = dataSource
                 });
 
             var cacheOptions = Options.Create(
-                  new CacheOptions
-                  {
-                      ExpirationInMinutes = 10
-                  });
-
-            clientMock
-                .Setup(x => x.GetBreweriesAsync())
-                .ReturnsAsync(new List<OpenBreweryApiResponse>
+                new CacheOptions
                 {
-                    new OpenBreweryApiResponse
-                    {
-                        Name = "ABC Brewery",
-                        City = "Nashik",
-                        Phone = "1234567890",
-                        BreweryType = "micro",
-                        Latitude = 19.9975,
-                        Longitude = 73.7898
-                    },
-                    new OpenBreweryApiResponse
-                    {
-                        Name = "XYZ Brewery",
-                        City = "Pune",
-                        Phone = "9876543210",
-                        BreweryType = "regional",
-                        Latitude = 18.5204,
-                        Longitude = 73.8567
-                    }
+                    ExpirationInMinutes = 10
                 });
 
             var service = new OpenBreweryService(
@@ -68,9 +46,45 @@ namespace OpenBrewery.Tests.Unit.Services
                 options,
                 cacheOptions);
 
+            return (
+                clientMock,
+                repositoryMock,
+                service);
+        }
+
+        [Fact]
+        public async Task GetBreweryAsync_SearchByName_ShouldPassNameSearchToExternalApi()
+        {
+            // Arrange
+            var (
+                clientMock,
+                _,
+                service) = CreateService(
+                    BreweryDataSource.ExternalApi);
+
+            clientMock
+                .Setup(x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()))
+                .ReturnsAsync(new List<OpenBreweryApiResponse>
+                {
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "ABC Brewery",
+                        City = "Nashik"
+                    }
+                });
+
             var request = new GetBreweriesRequest
             {
-                Search = "ABC"
+                Search = "ABC",
+                SearchBy = "name"
             };
 
             // Act
@@ -79,57 +93,53 @@ namespace OpenBrewery.Tests.Unit.Services
             // Assert
             Assert.Single(result);
             Assert.Equal("ABC Brewery", result.First().Name);
+
+            clientMock.Verify(
+                x => x.GetBreweriesAsync(
+                    1,
+                    20,
+                    "ABC",
+                    "name",
+                    null,
+                    false,
+                    null,
+                    null),
+                Times.Once);
         }
 
         [Fact]
-        public async Task GetBreweryAsync_ShouldReturnMatchingBreweries_WhenSearchMatchesCity()
+        public async Task GetBreweryAsync_SearchByCity_ShouldPassCitySearchToExternalApi()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.ExternalApi
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
+            var (
+                clientMock,
+                _,
+                service) = CreateService(
+                    BreweryDataSource.ExternalApi);
 
             clientMock
-                .Setup(x => x.GetBreweriesAsync())
+                .Setup(x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()))
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
                 {
-            new OpenBreweryApiResponse
-            {
-                Name = "ABC Brewery",
-                City = "Nashik"
-            },
-            new OpenBreweryApiResponse
-            {
-                Name = "XYZ Brewery",
-                City = "Pune"
-            }
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "ABC Brewery",
+                        City = "Nashik"
+                    }
                 });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
-                Search = "Nashik"
+                Search = "Nashik",
+                SearchBy = "city"
             };
 
             // Act
@@ -138,44 +148,51 @@ namespace OpenBrewery.Tests.Unit.Services
             // Assert
             Assert.Single(result);
             Assert.Equal("Nashik", result.First().City);
+
+            clientMock.Verify(
+                x => x.GetBreweriesAsync(
+                    1,
+                    20,
+                    "Nashik",
+                    "city",
+                    null,
+                    false,
+                    null,
+                    null),
+                Times.Once);
         }
 
         [Fact]
-        public async Task GetBreweryAsync_ShouldSortByNameAscending()
+        public async Task GetBreweryAsync_ShouldPassSortByNameAscendingToExternalApi()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.ExternalApi
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
+            var (
+                clientMock,
+                _,
+                service) = CreateService(
+                    BreweryDataSource.ExternalApi);
 
             clientMock
-                .Setup(x => x.GetBreweriesAsync())
+                .Setup(x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()))
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
                 {
-            new OpenBreweryApiResponse { Name = "Zeta Brewery" },
-            new OpenBreweryApiResponse { Name = "Alpha Brewery" }
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "Alpha Brewery"
+                    },
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "Zeta Brewery"
+                    }
                 });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -184,49 +201,57 @@ namespace OpenBrewery.Tests.Unit.Services
             };
 
             // Act
-            var result = (await service.GetBreweryAsync(request)).ToList();
+            var result =
+                (await service.GetBreweryAsync(request)).ToList();
 
             // Assert
             Assert.Equal("Alpha Brewery", result[0].Name);
             Assert.Equal("Zeta Brewery", result[1].Name);
+
+            clientMock.Verify(
+                x => x.GetBreweriesAsync(
+                    1,
+                    20,
+                    null,
+                    null,
+                    "Name",
+                    false,
+                    null,
+                    null),
+                Times.Once);
         }
 
         [Fact]
-        public async Task GetBreweryAsync_ShouldSortByNameDescending()
+        public async Task GetBreweryAsync_ShouldPassSortByNameDescendingToExternalApi()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.ExternalApi
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
+            var (
+                clientMock,
+                _,
+                service) = CreateService(
+                    BreweryDataSource.ExternalApi);
 
             clientMock
-                .Setup(x => x.GetBreweriesAsync())
+                .Setup(x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()))
                 .ReturnsAsync(new List<OpenBreweryApiResponse>
                 {
-            new OpenBreweryApiResponse { Name = "Alpha Brewery" },
-            new OpenBreweryApiResponse { Name = "Zeta Brewery" }
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "Zeta Brewery"
+                    },
+                    new OpenBreweryApiResponse
+                    {
+                        Name = "Alpha Brewery"
+                    }
                 });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
 
             var request = new GetBreweriesRequest
             {
@@ -235,41 +260,35 @@ namespace OpenBrewery.Tests.Unit.Services
             };
 
             // Act
-            var result = (await service.GetBreweryAsync(request)).ToList();
+            var result =
+                (await service.GetBreweryAsync(request)).ToList();
 
             // Assert
             Assert.Equal("Zeta Brewery", result[0].Name);
             Assert.Equal("Alpha Brewery", result[1].Name);
+
+            clientMock.Verify(
+                x => x.GetBreweriesAsync(
+                    1,
+                    20,
+                    null,
+                    null,
+                    "Name",
+                    true,
+                    null,
+                    null),
+                Times.Once);
         }
 
         [Fact]
         public async Task GetBreweryAsync_ShouldThrowArgumentException_WhenSortByIsInvalid()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.ExternalApi
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
+            var (
+                clientMock,
+                _,
+                service) = CreateService(
+                    BreweryDataSource.ExternalApi);
 
             var request = new GetBreweriesRequest
             {
@@ -280,10 +299,20 @@ namespace OpenBrewery.Tests.Unit.Services
             var exception = await Assert.ThrowsAsync<ArgumentException>(
                 () => service.GetBreweryAsync(request));
 
-            Assert.Contains("Invalid sortBy value", exception.Message);
+            Assert.Contains(
+                "Invalid sortBy value",
+                exception.Message);
 
             clientMock.Verify(
-                x => x.GetBreweriesAsync(),
+                x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()),
                 Times.Never);
         }
 
@@ -291,120 +320,96 @@ namespace OpenBrewery.Tests.Unit.Services
         public async Task GetBreweryAsync_ShouldReturnBreweriesFromDatabase_WhenDatabaseHasData()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.Database
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
+            var (
+                clientMock,
+                repositoryMock,
+                service) = CreateService(
+                    BreweryDataSource.Database);
 
             repositoryMock
-                .Setup(x => x.GetAllAsync())
+                .Setup(x => x.GetAllAsync(
+                    It.IsAny<BreweryQuery>()))
                 .ReturnsAsync(new List<Core.Entities.Brewery>
                 {
-            new Core.Entities.Brewery
-            {
-                Name = "Database Brewery",
-                City = "Nashik",
-                BreweryType = "micro"
-            }
+                    new Core.Entities.Brewery
+                    {
+                        Name = "Database Brewery",
+                        City = "Nashik",
+                        BreweryType = "micro"
+                    }
                 });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
 
             var request = new GetBreweriesRequest();
 
             // Act
-            var result = (await service.GetBreweryAsync(request)).ToList();
+            var result =
+                (await service.GetBreweryAsync(request)).ToList();
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("Database Brewery", result[0].Name);
+
+            Assert.Equal(
+                "Database Brewery",
+                result[0].Name);
+
+            repositoryMock.Verify(
+                x => x.GetAllAsync(
+                    It.IsAny<BreweryQuery>()),
+                Times.Once);
 
             clientMock.Verify(
-                x => x.GetBreweriesAsync(),
+                x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()),
                 Times.Never);
         }
 
         [Fact]
-        public async Task GetBreweryAsync_ShouldFetchAndSeedDatabase_WhenDatabaseIsEmpty()
+        public async Task GetBreweryAsync_ShouldReturnEmptyList_WhenDatabaseIsEmpty()
         {
             // Arrange
-            var clientMock = new Mock<IOpenBreweryClient>();
-            var repositoryMock = new Mock<IBreweryRepository>();
-            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
-            var cache = new MemoryCache(new MemoryCacheOptions());
-
-            var options = Options.Create(
-                new WebApiDataSourceOptions
-                {
-                    DataSource = BreweryDataSource.Database
-                });
-
-            var cacheOptions = Options.Create(
-                 new CacheOptions
-                 {
-                     ExpirationInMinutes = 10
-                 });
+            var (
+                clientMock,
+                repositoryMock,
+                service) = CreateService(
+                    BreweryDataSource.Database);
 
             repositoryMock
-                .Setup(x => x.GetAllAsync())
+                .Setup(x => x.GetAllAsync(
+                    It.IsAny<BreweryQuery>()))
                 .ReturnsAsync(new List<Core.Entities.Brewery>());
-
-            clientMock
-                .Setup(x => x.GetBreweriesAsync())
-                .ReturnsAsync(new List<OpenBreweryApiResponse>
-                {
-            new OpenBreweryApiResponse
-            {
-                Name = "New Brewery",
-                City = "Nashik",
-                BreweryType = "micro"
-            }
-                });
-
-            var service = new OpenBreweryService(
-                clientMock.Object,
-                loggerMock.Object,
-                cache,
-                repositoryMock.Object,
-                options,
-                cacheOptions);
 
             var request = new GetBreweriesRequest();
 
             // Act
-            var result = (await service.GetBreweryAsync(request)).ToList();
+            var result =
+                (await service.GetBreweryAsync(request)).ToList();
 
             // Assert
-            Assert.Single(result);
-            Assert.Equal("New Brewery", result[0].Name);
-
-            clientMock.Verify(
-                x => x.GetBreweriesAsync(),
-                Times.Once);
+            Assert.Empty(result);
 
             repositoryMock.Verify(
-                x => x.SeedAsync(
-                    It.Is<IEnumerable<Core.Entities.Brewery>>(
-                        breweries => breweries.Count() == 1)),
+                x => x.GetAllAsync(
+                    It.IsAny<BreweryQuery>()),
                 Times.Once);
+
+            clientMock.Verify(
+                x => x.GetBreweriesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<double?>(),
+                    It.IsAny<double?>()),
+                Times.Never);
         }
     }
 }

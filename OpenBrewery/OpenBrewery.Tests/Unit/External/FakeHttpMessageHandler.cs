@@ -1,19 +1,20 @@
-﻿namespace OpenBrewery.Tests.Unit.External
+﻿public class FakeHttpMessageHandler : HttpMessageHandler
 {
-    public class FakeHttpMessageHandler : HttpMessageHandler
+    private readonly HttpResponseMessage _response;
+
+    public Uri? RequestUri { get; private set; }
+
+    public FakeHttpMessageHandler(HttpResponseMessage response)
     {
-        private readonly HttpResponseMessage _response;
+        _response = response;
+    }
 
-        public FakeHttpMessageHandler(HttpResponseMessage response)
-        {
-            _response = response;
-        }
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        RequestUri = request.RequestUri;
 
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            return Task.FromResult(_response);
-        }
+        return Task.FromResult(_response);
     }
 }

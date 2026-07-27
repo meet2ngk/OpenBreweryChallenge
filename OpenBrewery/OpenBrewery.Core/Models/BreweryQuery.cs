@@ -1,17 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using OpenBrewery.Core.Enums;
 
 namespace OpenBrewery.Core.Models
 {
-    public class GetBreweriesRequest
+    public class BreweryQuery
     {
-        [MaxLength(100)]
         public string? Search { get; set; }
         public string? SearchBy { get; set; }
-        public string? SortBy { get; set; }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public BrewerySortBy? SortBy { get; set; }
         public bool Descending { get; set; }
         public double? UserLatitude { get; set; }
         public double? UserLongitude { get; set; }
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
     }
 }

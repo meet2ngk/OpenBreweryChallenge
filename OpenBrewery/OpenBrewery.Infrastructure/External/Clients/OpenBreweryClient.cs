@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenBrewery.Core.Configuration;
 using OpenBrewery.Core.Interfaces;
@@ -22,30 +23,120 @@ namespace OpenBrewery.Infrastructure.External.Clients
             _httpClient.BaseAddress = new Uri(_options.Value.BaseUrl);
             _httpClient.Timeout = TimeSpan.FromSeconds(_options.Value.TimeoutInSeconds);
         }
-        public async Task<IEnumerable<OpenBreweryApiResponse>> GetBreweriesAsync()
+        public async Task<IEnumerable<OpenBreweryApiResponse>> GetBreweriesAsync(
+            int page,
+            int perPage,
+            string? search = null,
+             string? searchBy = null,
+            string? sortBy = null,
+            bool descending = false,
+            double? latitude = null,
+            double? longitude = null)
         {
             try
             {
-                _logger.LogInformation("Calling Open Brewery external API");
+                var query = new Dictionary<string, string?>
+                {
+                    ["page"] = page.ToString(),
+                    ["per_page"] = perPage.ToString()
+                };
 
-                var response = await _httpClient.GetAsync(_options.Value.BreweriesEndpoint);
+                if (!string.IsNullOrWhiteSpace(search) &&
+                        !string.IsNullOrWhiteSpace(searchBy))
+                {
+                    switch (searchBy.ToLowerInvariant())
+                    {
+                        case "name":
+                            query["by_name"] = search;
+                            break;
 
-                _logger.LogInformation("Open Brewery external API responded with status code {StatusCode}", response.StatusCode);
+                        case "city":
+                            query["by_city"] = search;
+                            break;
+
+                        case "distance":
+                            if (latitude.HasValue && longitude.HasValue)
+                            {
+                                query["by_dist"] =
+                                    $"{latitude.Value},{longitude.Value}";
+                            }
+                            break;
+                    }
+                }
+
+                var requestUri = QueryHelpers.AddQueryString(
+                                    _options.Value.BreweriesEndpoint,
+                                    query);
+
+                if (string.Equals(
+                    sortBy,
+                    "distance",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    if (latitude.HasValue &&
+                        longitude.HasValue)
+                    {
+                        requestUri =
+                            $"{requestUri}&by_dist={latitude.Value},{longitude.Value}";
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(sortBy))
+                {
+                    var upstreamSort = MapSortField(sortBy);
+
+                    if (upstreamSort is not null)
+                    {
+                        var sortExpression =
+                            descending
+                                ? $"{upstreamSort}.desc"
+                                : $"{upstreamSort}.asc";
+
+                        requestUri =
+                            $"{requestUri}&{sortExpression}";
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Calling Open Brewery external API: {RequestUri}",
+                    requestUri);
+
+                var response = await _httpClient.GetAsync(requestUri);
+
+                _logger.LogInformation(
+                    "Open Brewery external API responded with status code {StatusCode}",
+                    response.StatusCode);
 
                 response.EnsureSuccessStatusCode();
 
-                var breweries = await response.Content.ReadFromJsonAsync<List<OpenBreweryApiResponse>>() ?? new List<OpenBreweryApiResponse>();
+                var breweries =
+                    await response.Content.ReadFromJsonAsync<
+                        List<OpenBreweryApiResponse>>()
+                    ?? new List<OpenBreweryApiResponse>();
 
-                _logger.LogInformation("Retrieved {Count} breweries from Open Brewery external API", breweries.Count);
+                _logger.LogInformation(
+                    "Retrieved {Count} breweries from Open Brewery external API",
+                    breweries.Count);
 
-                return breweries ?? Enumerable.Empty<OpenBreweryApiResponse>();
-
+                return breweries;
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "Error while calling Open Brewery API");
+                _logger.LogError(
+                    ex,
+                    "Error while calling Open Brewery API");
+
                 throw;
             }
+        }
+
+        private static string? MapSortField(string? sortBy)
+        {
+            return sortBy?.ToLowerInvariant() switch
+            {
+                "name" => "name",
+                "city" => "city",
+                _ => null
+            };
         }
     }
 }

@@ -56,7 +56,7 @@ public class OpenBreweryClientTests
             options);
 
         // Act
-        var result = (await client.GetBreweriesAsync()).ToList();
+        var result = (await client.GetBreweriesAsync(1, 200)).ToList();
 
         // Assert
         Assert.Single(result);

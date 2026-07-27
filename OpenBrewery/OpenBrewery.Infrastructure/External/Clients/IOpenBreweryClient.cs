@@ -4,6 +4,14 @@ namespace OpenBrewery.Core.Interfaces
 {
     public interface IOpenBreweryClient
     {
-        public Task<IEnumerable<OpenBreweryApiResponse>> GetBreweriesAsync();
+        Task<IEnumerable<OpenBreweryApiResponse>> GetBreweriesAsync(
+                                                                    int page,
+                                                                    int perPage,
+                                                                    string? search = null,
+                                                                    string? searchBy = null,
+                                                                    string? sortBy = null,
+                                                                    bool descending = false,
+                                                                    double? latitude = null,
+                                                                    double? longitude = null);
     }
 }

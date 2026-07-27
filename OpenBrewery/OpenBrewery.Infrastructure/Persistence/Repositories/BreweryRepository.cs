@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OpenBrewery.Core.Entities;
+using OpenBrewery.Core.Enums;
 using OpenBrewery.Core.Interfaces;
+using OpenBrewery.Core.Models;
 using OpenBrewery.Infrastructure.Persistence.Context;
 
 namespace OpenBrewery.Infrastructure.Persistence.Repositories
@@ -13,16 +15,73 @@ namespace OpenBrewery.Infrastructure.Persistence.Repositories
         {
             _context = context;
         }
-        public async Task<List<Brewery>> GetAllAsync()
+        public async Task<List<Brewery>> GetAllAsync(BreweryQuery query)
         {
-            return await _context.Breweries.AsNoTracking().ToListAsync();
+            IQueryable<Brewery> breweries = _context.Breweries
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(query.Search) &&
+                !string.IsNullOrWhiteSpace(query.SearchBy))
+            {
+                switch (query.SearchBy.ToLowerInvariant())
+                {
+                    case "name":
+                        breweries = breweries.Where(x =>
+                            x.Name != null &&
+                            x.Name.Contains(query.Search));
+                        break;
+
+                    case "city":
+                        breweries = breweries.Where(x =>
+                            x.City != null &&
+                            x.City.Contains(query.Search));
+                        break;
+                }
+            }
+
+            switch (query.SortBy)
+            {
+                case BrewerySortBy.Name:
+                    breweries = query.Descending
+                        ? breweries.OrderByDescending(x => x.Name)
+                        : breweries.OrderBy(x => x.Name);
+                    break;
+
+                case BrewerySortBy.City:
+                    breweries = query.Descending
+                        ? breweries.OrderByDescending(x => x.City)
+                        : breweries.OrderBy(x => x.City);
+                    break;
+            }
+
+            breweries = breweries
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize);
+
+            return await breweries.ToListAsync();
         }
 
-        public async Task SeedAsync(IEnumerable<Brewery> breweries)
+        public async Task AddRangeAsync(IEnumerable<Brewery> breweries)
         {
             await _context.Breweries.AddRangeAsync(breweries);
-
-            await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Brewery>> GetForDistanceAsync(string? search)
+        {
+            IQueryable<Brewery> breweries =
+                _context.Breweries.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                breweries = breweries.Where(x =>
+                    (x.Name != null &&
+                     x.Name.Contains(search)) ||
+                    (x.City != null &&
+                     x.City.Contains(search)));
+            }
+
+            return await breweries.ToListAsync();
+        }
+
     }
 }

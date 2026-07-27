@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenBrewery.Core.Configuration;
 using OpenBrewery.Core.Interfaces;
 using OpenBrewery.Infrastructure.External.Clients;
+using OpenBrewery.Infrastructure.Persistence;
 using OpenBrewery.Infrastructure.Persistence.Context;
 using OpenBrewery.Infrastructure.Persistence.Repositories;
 using OpenBrewery.Infrastructure.Services;
@@ -17,11 +18,11 @@ builder.Services.AddControllers();
 
 //Api-versioning
 builder.Services.AddApiVersioning(options =>
-    {
-        options.DefaultApiVersion = new ApiVersion(1, 0);
-        options.AssumeDefaultVersionWhenUnspecified = true;
-        options.ReportApiVersions = true;
-    })
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+})
     .AddApiExplorer(options =>
     {
         options.GroupNameFormat = "'v'VVV";
@@ -40,13 +41,16 @@ builder.Services.AddDbContext<BreweryDbContext>(options =>
 
 //Repository
 builder.Services.AddScoped<IBreweryRepository, BreweryRepository>();
+builder.Services.AddScoped<IInitializationRepository, InitializationRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 //HTTP clients/ external API
 builder.Services.AddHttpClient<IOpenBreweryClient, OpenBreweryClient>();
 
 //Application Services
 builder.Services.AddScoped<IOpenBreweryService, OpenBreweryService>();
-
+builder.Services.AddScoped<IBreweryDataSyncService, OpenBreweryDataSyncService>();
+builder.Services.AddScoped<IBreweryDataSyncService, OpenBreweryDataSyncService>();
 //Cache
 builder.Services.AddMemoryCache();
 
@@ -90,8 +94,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-var connectionString =
-    builder.Configuration.GetConnectionString("BreweryDatabase");
+
+//Onetime database intialization - Seeding from external api (response)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<BreweryDbContext>();
+
+    await dbContext.Database.MigrateAsync();
+
+    var syncService = scope.ServiceProvider
+        .GetRequiredService<IBreweryDataSyncService>();
+
+    await syncService.InitializeDatabaseAsync();
+}
 
 // HTTP request pipeline.
 if (app.Environment.IsDevelopment())
