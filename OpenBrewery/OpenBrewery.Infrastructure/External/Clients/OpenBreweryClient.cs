@@ -129,6 +129,55 @@ namespace OpenBrewery.Infrastructure.External.Clients
             }
         }
 
+        public async Task<IEnumerable<OpenBreweryApiResponse>> SearchBreweriesAsync(
+            string query,
+            int perPage)
+        {
+            try
+            {
+                var queryParameters = new Dictionary<string, string?>
+                {
+                    ["query"] = query,
+                    ["per_page"] = perPage.ToString()
+                };
+
+                var requestUri = QueryHelpers.AddQueryString(
+                    $"{_options.Value.BreweriesEndpoint}/search",
+                    queryParameters);
+
+                _logger.LogInformation(
+                    "Calling Open Brewery search API: {RequestUri}",
+                    requestUri);
+
+                var response = await _httpClient.GetAsync(requestUri);
+
+                _logger.LogInformation(
+                    "Open Brewery search API responded with status code {StatusCode}",
+                    response.StatusCode);
+
+                response.EnsureSuccessStatusCode();
+
+                var breweries =
+                    await response.Content.ReadFromJsonAsync<
+                        List<OpenBreweryApiResponse>>()
+                    ?? new List<OpenBreweryApiResponse>();
+
+                _logger.LogInformation(
+                    "Retrieved {Count} breweries from Open Brewery search API",
+                    breweries.Count);
+
+                return breweries;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error while calling Open Brewery search API");
+
+                throw;
+            }
+        }
+
         private static string? MapSortField(string? sortBy)
         {
             return sortBy?.ToLowerInvariant() switch

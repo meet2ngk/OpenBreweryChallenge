@@ -83,5 +83,20 @@ namespace OpenBrewery.Infrastructure.Persistence.Repositories
             return await breweries.ToListAsync();
         }
 
+        public async Task<List<Brewery>> GetAutocompleteAsync(
+            string query,
+            int limit)
+        {
+            return await _context.Breweries
+                .AsNoTracking()
+                .Where(x =>
+                    (x.Name != null &&
+                     x.Name.Contains(query)) ||
+                    (x.City != null &&
+                     x.City.Contains(query)))
+                .OrderBy(x => x.Name)
+                .Take(limit)
+                .ToListAsync();
+        }
     }
 }

@@ -484,5 +484,63 @@ namespace OpenBrewery.Tests.Unit.Repositories
             // Assert
             Assert.Equal(2, result.Count);
         }
+
+        [Fact]
+        public async Task GetAutocompleteAsync_ShouldReturnMatchingBreweries()
+        {
+            // Arrange
+            await using var connection =
+                new SqliteConnection("DataSource=:memory:");
+
+            await connection.OpenAsync();
+
+            var options =
+                new DbContextOptionsBuilder<BreweryDbContext>()
+                    .UseSqlite(connection)
+                    .Options;
+
+            await using var context =
+                new BreweryDbContext(options);
+
+            await context.Database.EnsureCreatedAsync();
+
+            context.Breweries.AddRange(
+                new Brewery
+                {
+                    Name = "ABC Brewery",
+                    City = "Nashik"
+                },
+                new Brewery
+                {
+                    Name = "XYZ Brewing Company",
+                    City = "Pune"
+                },
+                new Brewery
+                {
+                    Name = "Other Pub",
+                    City = "Mumbai"
+                });
+
+            await context.SaveChangesAsync();
+
+            var repository =
+                new BreweryRepository(context);
+
+            // Act
+            var result =
+                await repository.GetAutocompleteAsync(
+                    "Brew",
+                    10);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains(
+                result,
+                x => x.Name == "ABC Brewery");
+
+            Assert.Contains(
+                result,
+                x => x.Name == "XYZ Brewing Company");
+        }
     }
 }

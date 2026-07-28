@@ -299,5 +299,57 @@ namespace OpenBrewery.Infrastructure.Services
                 .Take(request.PageSize)
                 .ToList();
         }
+
+        public async Task<IEnumerable<BreweryDto>> GetAutocompleteAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentException(
+                    "Search query is required.",
+                    nameof(query));
+            }
+
+            const int limit = 10;
+
+            if (_options.Value.DataSource ==
+                BreweryDataSource.Database)
+            {
+                var breweries =
+                    await _repository.GetAutocompleteAsync(
+                        query,
+                        limit);
+
+                return breweries
+                    .Select(x => new BreweryDto
+                    {
+                        Name = x.Name,
+                        City = x.City,
+                        Phone = x.Phone,
+                        BreweryType = x.BreweryType,
+                        Latitude = x.Latitude,
+                        Longitude = x.Longitude,
+                        DistanceInKm = null
+                    })
+                    .ToList();
+            }
+
+            var apiResponse =
+                await _client.SearchBreweriesAsync(
+                    query,
+                    limit);
+
+            return apiResponse
+                .Select(x => new BreweryDto
+                {
+                    Name = x.Name,
+                    City = x.City,
+                    Phone = x.Phone,
+                    BreweryType = x.BreweryType,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude,
+                    DistanceInKm = null
+                })
+                .ToList();
+        }
     }
 }

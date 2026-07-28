@@ -58,5 +58,27 @@ namespace OpenBrewery.Api.Controllers
                                statusCode: StatusCodes.Status500InternalServerError);
             }
         }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<BreweryDto>>> Search([FromQuery] string query)
+        {
+            try
+            {
+                var result = await _openBreweryService.GetAutocompleteAsync(query);
+
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while search.");
+
+                return Problem(title: "An unexpected error occured",
+                               statusCode: StatusCodes.Status500InternalServerError);
+            }
+        }
     }
 }

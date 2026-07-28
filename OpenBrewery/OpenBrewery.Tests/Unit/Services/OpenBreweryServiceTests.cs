@@ -411,5 +411,195 @@ namespace OpenBrewery.Tests.Unit.Services
                     It.IsAny<double?>()),
                 Times.Never);
         }
+
+        [Fact]
+        public async Task GetAutocompleteAsync_ShouldReturnResultsFromExternalApi()
+        {
+            // Arrange
+            var clientMock = new Mock<IOpenBreweryClient>();
+            var repositoryMock = new Mock<IBreweryRepository>();
+            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            var options = Options.Create(
+                new WebApiDataSourceOptions
+                {
+                    DataSource = BreweryDataSource.ExternalApi
+                });
+
+            var cacheOptions = Options.Create(
+                new CacheOptions
+                {
+                    ExpirationInMinutes = 10
+                });
+
+            clientMock
+                .Setup(x => x.SearchBreweriesAsync(
+                    "Brew",
+                    10))
+                .ReturnsAsync(new List<OpenBreweryApiResponse>
+                {
+            new OpenBreweryApiResponse
+            {
+                Name = "ABC Brewery",
+                City = "Nashik",
+                Phone = "1234567890",
+                BreweryType = "micro"
+            },
+            new OpenBreweryApiResponse
+            {
+                Name = "XYZ Brewing Company",
+                City = "Pune",
+                Phone = "9876543210",
+                BreweryType = "regional"
+            }
+                });
+
+            var service = new OpenBreweryService(
+                clientMock.Object,
+                loggerMock.Object,
+                cache,
+                repositoryMock.Object,
+                options,
+                cacheOptions);
+
+            // Act
+            var result = (
+                await service.GetAutocompleteAsync("Brew"))
+                .ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("ABC Brewery", result[0].Name);
+            Assert.Equal("XYZ Brewing Company", result[1].Name);
+
+            clientMock.Verify(
+                x => x.SearchBreweriesAsync("Brew", 10),
+                Times.Once);
+
+            repositoryMock.Verify(
+                x => x.GetAutocompleteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<int>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task GetAutocompleteAsync_ShouldReturnResultsFromDatabase()
+        {
+            // Arrange
+            var clientMock = new Mock<IOpenBreweryClient>();
+            var repositoryMock = new Mock<IBreweryRepository>();
+            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            var options = Options.Create(
+                new WebApiDataSourceOptions
+                {
+                    DataSource = BreweryDataSource.Database
+                });
+
+            var cacheOptions = Options.Create(
+                new CacheOptions
+                {
+                    ExpirationInMinutes = 10
+                });
+
+            repositoryMock
+                .Setup(x => x.GetAutocompleteAsync(
+                    "Brew",
+                    10))
+                .ReturnsAsync(new List<Core.Entities.Brewery>
+                {
+            new Core.Entities.Brewery
+            {
+                Name = "ABC Brewery",
+                City = "Nashik",
+                Phone = "1234567890",
+                BreweryType = "micro"
+            },
+            new Core.Entities.Brewery
+            {
+                Name = "XYZ Brewing Company",
+                City = "Pune",
+                Phone = "9876543210",
+                BreweryType = "regional"
+            }
+                });
+
+            var service = new OpenBreweryService(
+                clientMock.Object,
+                loggerMock.Object,
+                cache,
+                repositoryMock.Object,
+                options,
+                cacheOptions);
+
+            // Act
+            var result = (
+                await service.GetAutocompleteAsync("Brew"))
+                .ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("ABC Brewery", result[0].Name);
+            Assert.Equal("XYZ Brewing Company", result[1].Name);
+
+            repositoryMock.Verify(
+                x => x.GetAutocompleteAsync("Brew", 10),
+                Times.Once);
+
+            clientMock.Verify(
+                x => x.SearchBreweriesAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<int>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task GetAutocompleteAsync_ShouldThrowArgumentException_WhenQueryIsEmpty()
+        {
+            // Arrange
+            var clientMock = new Mock<IOpenBreweryClient>();
+            var repositoryMock = new Mock<IBreweryRepository>();
+            var loggerMock = new Mock<ILogger<OpenBreweryService>>();
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            var options = Options.Create(
+                new WebApiDataSourceOptions
+                {
+                    DataSource = BreweryDataSource.ExternalApi
+                });
+
+            var cacheOptions = Options.Create(
+                new CacheOptions
+                {
+                    ExpirationInMinutes = 10
+                });
+
+            var service = new OpenBreweryService(
+                clientMock.Object,
+                loggerMock.Object,
+                cache,
+                repositoryMock.Object,
+                options,
+                cacheOptions);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => service.GetAutocompleteAsync(""));
+
+            clientMock.Verify(
+                x => x.SearchBreweriesAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<int>()),
+                Times.Never);
+
+            repositoryMock.Verify(
+                x => x.GetAutocompleteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<int>()),
+                Times.Never);
+        }
     }
 }

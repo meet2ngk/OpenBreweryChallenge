@@ -8,5 +8,6 @@ namespace OpenBrewery.Core.Interfaces
         Task<List<Brewery>> GetAllAsync(BreweryQuery query);
         Task AddRangeAsync(IEnumerable<Brewery> breweries);
         Task<List<Brewery>> GetForDistanceAsync(string? search);
+        Task<List<Brewery>> GetAutocompleteAsync(string query, int limit);
     }
 }

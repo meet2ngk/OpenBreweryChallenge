@@ -13,5 +13,9 @@ namespace OpenBrewery.Core.Interfaces
                                                                     bool descending = false,
                                                                     double? latitude = null,
                                                                     double? longitude = null);
+
+        Task<IEnumerable<OpenBreweryApiResponse>> SearchBreweriesAsync(
+                                                                    string query,
+                                                                    int perPage);
     }
 }

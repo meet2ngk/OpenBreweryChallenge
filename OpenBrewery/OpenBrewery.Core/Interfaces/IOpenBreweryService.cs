@@ -6,5 +6,7 @@ namespace OpenBrewery.Core.Interfaces
     public interface IOpenBreweryService
     {
         public Task<IEnumerable<BreweryDto>> GetBreweryAsync(GetBreweriesRequest getBreweriesRequest);
+
+        Task<IEnumerable<BreweryDto>> GetAutocompleteAsync(string query);
     }
 }
